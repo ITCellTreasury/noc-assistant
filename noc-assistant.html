@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <title>NOC Assistant</title>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#202123">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <style>
+:root{
+  --nav:#202123; --nav-hover:#343541;
+  --page:#ffffff; --text:#2f2f2f; --muted:#6b6b6b;
+  --bot:#f7f7f8; --user:#e8f3ff; --border:#e5e5e5; --accent:#10a37f;
+  --composer-bg:rgba(255,255,255,.94); --composer-border:#d9d9d9;
+  --input-bg:#ffffff; --input-border:#d9d9d9;
+  --shadow:0 4px 18px rgba(0,0,0,.10); --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#212121; --text:#ececec; --muted:#a9a9a9;
+    --bot:#2f2f2f; --user:#303b4a; --border:#444;
+    --composer-bg:rgba(33,33,33,.94); --composer-border:#4a4a4a;
+    --input-bg:#2f2f2f; --input-border:#555;
+    --shadow:0 4px 22px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--page);color:var(--text);transition:background-color .2s,color .2s}
+.app{width:100%;height:100vh;display:flex;flex-direction:column;background:transparent;position:relative}
+.header{position:fixed;top:0;left:0;right:0;height:64px;z-index:100;background:var(--nav);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border:0;border-radius:0;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.bot-icon{width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#fff0}.bot-icon img{width:100%;height:100%;object-fit:cover;display:block}.bot-info{display:flex;flex-direction:column;gap:2px;min-width:0}.bot-title{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bot-status{display:flex;align-items:center;gap:6px;font-size:11px;color:#c5c5c5}.bot-status .status-dot{width:7px;height:7px;border-radius:50%;background:#10a37f;display:inline-block;animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.header-actions{display:flex;align-items:center;gap:6px}.header-actions button,.header-actions a{padding:8px 10px;border:0;background:transparent;color:#ececec;font-size:17px;cursor:pointer;border-radius:8px;transition:.18s;text-decoration:none;display:flex;align-items:center;justify-content:center;line-height:1}.header-actions button:hover,.header-actions a:hover{background:var(--nav-hover);color:#fff}.header-actions .btn-change{background:#343541;color:#fff;border-radius:9px;padding:8px 13px;font-size:12px;font-weight:600;gap:6px}.header-actions .btn-change:hover{background:#45464f}.header-actions .btn-change i{font-size:13px}
+.chat{flex:1;overflow-y:auto;min-height:0;padding:88px 0 150px;scroll-behavior:smooth;background:var(--page);transition:background-color .2s}.chat::-webkit-scrollbar{width:8px}.chat::-webkit-scrollbar-track{background:transparent}.chat::-webkit-scrollbar-thumb{background:#777;border-radius:99px}.chat::-webkit-scrollbar-thumb:hover{background:#999}
+.message{display:flex;flex-direction:column;margin:0 0 22px;animation:fadeInUp .25s ease-out}.message.user{align-items:flex-end;padding-right:16%}.message.bot{align-items:flex-start;padding-left:16%}@keyframes fadeInUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.bubble{max-width:760px;width:fit-content;padding:13px 17px;border-radius:var(--radius);line-height:1.62;font-size:14px;word-wrap:break-word;overflow-wrap:anywhere;position:relative;box-shadow:none}.message.bot .bubble{background:var(--bot);border:1px solid color-mix(in srgb,var(--border) 75%,transparent);border-bottom-left-radius:5px;color:var(--text)}.message.user .bubble{background:var(--user);color:var(--text);border:1px solid color-mix(in srgb,var(--border) 70%,transparent);border-bottom-right-radius:5px;box-shadow:var(--shadow)}
+.bubble-content{margin-bottom:6px}.bubble-content p{margin-bottom:6px}.bubble-content p:last-child{margin-bottom:0}.bubble-content strong{font-weight:650}.bubble-content a{color:#0b7f68;text-decoration:underline}.message.user .bubble-content a{color:#096b59}.bubble-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#8a8a8a;opacity:.8;border-top:1px solid rgba(127,127,127,.22);padding-top:6px;margin-top:6px}.message.user .bubble-footer{color:#84909a}.bubble-footer .source{font-style:italic}.bubble-footer .timestamp{white-space:nowrap;font-variant-numeric:tabular-nums}
+.suggestion-prompt{font-size:13px;font-weight:600;margin:12px 0 8px;color:var(--muted)}.suggestion-item{display:block;width:100%;padding:10px 13px;margin:6px 0;border-radius:9px;background:var(--input-bg);border:1px solid var(--border);cursor:pointer;transition:.18s;font-size:13px;color:var(--text);text-align:left;font-family:inherit;line-height:1.4}.suggestion-item:hover{filter:brightness(.96)}.suggestion-item.none{background:transparent;border-color:transparent;color:var(--muted)}.suggestion-item.none:hover{background:rgba(127,127,127,.08);border-color:transparent}.suggestion-item.no-answer-link{background:transparent;border:0;padding:8px 2px;color:#0b7f68;text-decoration:underline}.suggestion-item.no-answer-link:hover{background:transparent;color:#086a58}.suggestion-hint{margin-top:8px;font-size:12px;color:var(--muted)}.query-id{margin-top:8px;padding:6px 10px;background:rgba(16,163,127,.10);border-radius:8px;font-size:11px;color:var(--muted);display:inline-block}.query-id strong{font-weight:600;color:#0b8068}
+.typing{display:inline-flex;gap:4px;align-items:center;padding:4px 0}.typing span{width:7px;height:7px;border-radius:50%;background:#888;animation:typing 1.4s infinite ease-in-out}.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+/* Desktop composer */
+.composer{position:fixed;z-index:90;left:50%;bottom:18px;transform:translateX(-50%);width:min(860px,calc(100% - 120px));padding:0;display:flex;gap:8px;background:transparent;border:0}
+/* Aurora glow behind the input, inspired by modern AI assistants */
+.input-wrapper{
+  flex:1;min-width:0;position:relative;isolation:isolate;display:flex;align-items:center;
+  background:var(--input-bg);border:1px solid transparent;
+  border-radius:18px;box-shadow:var(--shadow);transition:border-color .25s ease,box-shadow .25s ease;
+  overflow:visible;z-index:1;
+}
+.input-wrapper::before{
+  content:"";position:absolute;z-index:-2;inset:-8px;border-radius:26px;
+  background:
+    radial-gradient(ellipse at 12% 55%,rgba(0,190,255,.72) 0%,rgba(0,190,255,0) 42%),
+    radial-gradient(ellipse at 38% 15%,rgba(90,80,255,.62) 0%,rgba(90,80,255,0) 45%),
+    radial-gradient(ellipse at 65% 88%,rgba(0,220,170,.68) 0%,rgba(0,220,170,0) 44%),
+    radial-gradient(ellipse at 90% 38%,rgba(255,80,190,.58) 0%,rgba(255,80,190,0) 42%);
+  filter:blur(15px);opacity:.72;animation:auroraMove 7s ease-in-out infinite alternate;pointer-events:none;
+}
+.input-wrapper::after{
+  content:"";position:absolute;z-index:0;inset:-1px;border-radius:19px;padding:1px;
+  background:linear-gradient(105deg,rgba(0,190,255,.82),rgba(100,80,255,.72),rgba(0,220,170,.72),rgba(255,80,190,.68),rgba(0,190,255,.82));
+  background-size:220% 220%;animation:auroraBorder 6s linear infinite;pointer-events:none;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+}
+@keyframes auroraMove{
+  0%{transform:translate3d(-2%,0,0) scale(.98) rotate(-1deg);filter:blur(15px)}
+  50%{transform:translate3d(1%,2%,0) scale(1.02) rotate(1deg);filter:blur(19px)}
+  100%{transform:translate3d(3%,-1%,0) scale(.99) rotate(-.5deg);filter:blur(16px)}
+}
+@keyframes auroraBorder{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.input-wrapper:focus-within{
+  border-color:rgba(120,120,120,.55);
+  box-shadow:0 4px 20px rgba(0,0,0,.16),0 0 28px rgba(70,150,255,.12);
+}
+.input-wrapper:focus-within::before{opacity:.95;animation-duration:5s}.question-input{flex:1;min-width:0;position:relative;z-index:2;border:0;background:transparent;color:var(--text);padding:14px 8px 14px 16px;outline:none;resize:none;font-family:inherit;font-size:14px;min-height:50px;max-height:130px;line-height:1.5;caret-color:var(--text);border-radius:17px 0 0 17px;transition:opacity .22s ease}.question-input::placeholder{color:var(--muted)}.input-wrapper:focus-within 
+.question-input:focus{background:transparent!important;border-radius:17px 0 0 17px!important}
+
+.question-input{background:linear-gradient(90deg,rgba(0,190,255,.035),rgba(100,80,255,.025),rgba(0,220,170,.035),rgba(255,80,190,.025))}.send-btn{width:32px;height:32px;min-width:32px;padding:0;border:0;border-radius:50%;background:#2f80ed;color:#fff;cursor:pointer;font-size:15px;line-height:1;flex:0 0 32px;transition:background .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;display:flex;align-items:center;justify-content:center;align-self:center;margin:0 7px 0 4px;box-shadow:none;position:relative;z-index:4}.send-btn i{display:block;line-height:1;transform:translateY(-.5px)}.send-btn:hover:not(:disabled){background:#256fd1;transform:none;box-shadow:0 1px 5px rgba(0,0,0,.20)}.send-btn:active:not(:disabled){transform:scale(.94)}.send-btn:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;animation:fadeIn .2s ease-out}.modal-backdrop.show{display:flex}@keyframes fadeIn{from{opacity:0}to{opacity:1}}.modal{width:100%;max-width:440px;background:var(--input-bg);border:1px solid var(--border);border-radius:18px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:slideUp .25s ease-out}@keyframes slideUp{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}.modal-icon{width:50px;height:50px;border-radius:12px;background:#202123;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:15px;color:#fff}.modal h2{font-size:21px;font-weight:650;margin:0 0 6px;color:var(--text)}.modal p{margin:0 0 22px;color:var(--muted);font-size:14px;line-height:1.6}.field{margin-bottom:17px}.field label{display:block;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--text)}
+.floating-field{position:relative;margin-top:20px}.floating-field input{width:100%;border:1px solid var(--border);background:var(--input-bg);color:var(--text);padding:13px;border-radius:10px;outline:none;font-family:inherit;font-size:14px;transition:border-color .18s,box-shadow .18s}.floating-field label{position:absolute;left:11px;top:50%;transform:translateY(-50%);margin:0;padding:0 4px;color:var(--muted);font-size:14px;font-weight:400;pointer-events:none;background:var(--input-bg);transition:all .18s ease}.floating-field input:focus{border-color:#999;box-shadow:0 0 0 3px rgba(127,127,127,.12)}.floating-field input:focus + label,.floating-field input:not(:placeholder-shown) + label{top:0;transform:translateY(-50%);font-size:11px;font-weight:600;color:var(--text)}.floating-field input:focus + label{color:#0b7f68}.floating-field .br-help{margin-top:6px}.floating-field .branch-info{margin-top:10px}.field input:focus{border-color:#999;box-shadow:0 0 0 3px rgba(127,127,127,.12)}.br-help{margin-top:6px;color:var(--muted);font-size:12px}.branch-info{margin-top:10px;padding:10px 13px;border-radius:8px;background:rgba(127,127,127,.10);font-size:13px;color:var(--text);display:none}.branch-info.show{display:block}.modal-error{display:none;margin-bottom:15px;padding:11px 13px;border-radius:8px;background:#fff0f0;color:#c62828;font-size:13px;border:1px solid #ffd2d2}.modal-error.show{display:block}.btn-primary{width:100%;border:0;background:#202123;color:#fff;border-radius:10px;padding:13px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.18s}.btn-primary:hover:not(:disabled){background:#343541}.btn-primary:disabled{opacity:.55;cursor:not-allowed}.btn-secondary{width:100%;margin-top:10px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);border-radius:10px;padding:11px;font-family:inherit;font-size:13px;cursor:pointer}.btn-secondary:hover{filter:brightness(.96)}
+/* Mobile: restore the original full-width composer behavior; never overflow horizontally */
+@media (max-width:900px){
+  html,body{overflow:hidden;width:100%;min-width:0}
+  body{font-size:14px}
+  .app{width:100%;min-width:0;height:100vh}
+  .header{height:60px;padding:0 16px}
+  .bot-icon{width:38px;height:38px}.bot-title{font-size:15px}
+  .chat{padding:72px 12px 140px;background:var(--page)} /* bottom padding is synced to the fixed composer */
+  .message.user,.message.bot{padding-left:0;padding-right:0}
+  .bubble{max-width:92%;font-size:13px;padding:10px 14px}
+  .composer{position:fixed;left:0;right:0;bottom:0;transform:none;width:100%;max-width:none;min-width:0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));gap:8px;flex-shrink:0;background:var(--composer-bg);border-top:1px solid var(--composer-border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .input-wrapper{min-width:0;width:auto;flex:1;border-radius:14px;box-shadow:none;overflow:visible}
+  .question-input{min-width:0;width:100%;font-size:14px;min-height:44px;padding:10px 6px 10px 12px;border-radius:13px 0 0 13px}
+  .question-input:focus{border-radius:13px 0 0 13px!important}
+  .send-btn{width:32px;height:32px;min-width:32px;flex-basis:32px;margin:0 6px 0 3px;border-radius:50%;font-size:15px;align-self:center}
+  .mic-btn{width:34px;height:34px;margin:4px 1px}
+  .modal{padding:24px;margin:12px}
+}
+@media (max-width:400px){
+  .header{padding:0 12px}.header-actions button,.header-actions a{font-size:16px;padding:6px 8px}.header-actions .btn-change{font-size:12px;padding:4px 10px}
+  .question-input{font-size:13px;padding:8px 5px 8px 10px;min-height:38px;border-radius:13px 0 0 13px}
+  .send-btn{width:32px;height:32px;min-width:32px;flex-basis:32px;font-size:15px;margin:0 5px 0 2px}
+  .mic-btn{width:31px;height:31px;margin:3px 0}
+  .composer{padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));gap:6px}.chat{padding:68px 12px 130px}
+}
+/* Animated composer placeholder */
+.question-input{
+  transition:opacity .22s ease;
+}
+.question-input.placeholder-fade{
+  opacity:.35;
+}
+@media (prefers-reduced-motion: reduce){
+  .input-wrapper::before,.input-wrapper::after{animation:none}
+  .question-input{transition:none}
+}
+
+@supports (-webkit-touch-callout:none){.app{height:-webkit-fill-available}.composer{bottom:env(safe-area-inset-bottom,0px)}}
+@media (max-height:500px) and (orientation:landscape){.header{height:52px;padding:0 16px}.bot-icon{width:32px;height:32px}.bot-title{font-size:14px}.chat{padding:62px 16px 110px}.question-input{min-height:34px;/*padding:6px 10px;*/font-size:13px}.send-btn{width:32px;height:32px;font-size:14px;flex-basis:32px}.bubble{padding:8px 12px;font-size:12px}.composer{padding:6px 12px}}
+
+/* Premium visual polish */
+.header{
+  background:linear-gradient(135deg,#17181a 0%,#232427 55%,#1d2b29 100%);
+  box-shadow:0 8px 28px rgba(0,0,0,.16);
+}
+.bot-icon{box-shadow:0 0 0 1px rgba(255,255,255,.10),0 6px 18px rgba(0,0,0,.22)}
+.bot-status .status-dot{box-shadow:0 0 10px rgba(16,163,127,.75)}
+.chat{
+  background:
+    radial-gradient(circle at 15% 12%,rgba(16,163,127,.035),transparent 28%),
+    radial-gradient(circle at 88% 72%,rgba(80,110,255,.035),transparent 30%),var(--page);
+}
+.message.bot .bubble{box-shadow:0 5px 22px rgba(0,0,0,.045)}
+.message.user .bubble{background:linear-gradient(135deg,var(--user),color-mix(in srgb,var(--user) 82%,#fff))}
+.suggestion-item{box-shadow:0 2px 8px rgba(0,0,0,.035)}
+.suggestion-item:hover{
+  transform:translateY(-1px);border-color:rgba(16,163,127,.35);
+  box-shadow:0 5px 14px rgba(16,163,127,.10);
+}
+/* ChatGPT-style compact circular send control */
+.send-btn{background:#2f80ed;color:#fff}
+.send-btn:hover:not(:disabled){background:#256fd1}
+
+.composer{isolation:isolate}
+.composer::before{
+  content:"";position:absolute;inset:-18px -28px;border-radius:32px;
+  background:radial-gradient(ellipse at 50% 100%,rgba(16,163,127,.10),transparent 62%);
+  filter:blur(16px);pointer-events:none;z-index:-3;
+}
+.composer-orb{
+  position:absolute;width:7px;height:7px;border-radius:50%;left:12px;top:10px;
+  background:#10a37f;box-shadow:0 0 12px rgba(16,163,127,.8);opacity:.75;
+  z-index:3;pointer-events:none;
+}
+.mic-btn{
+  width:38px;height:38px;border:0;border-radius:11px;background:transparent;color:var(--muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  margin:6px;transition:transform .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease;
+  position:relative;z-index:4;font-size:15px;
+}
+.mic-btn:hover{background:rgba(16,163,127,.10);color:#10a37f;transform:translateY(-1px)}
+.mic-btn.listening{background:rgba(220,53,69,.12);color:#dc3545;
+  box-shadow:0 0 0 5px rgba(220,53,69,.06);animation:micPulse 1.3s ease-in-out infinite}
+@keyframes micPulse{
+  0%,100%{box-shadow:0 0 0 4px rgba(220,53,69,.06)}
+  50%{box-shadow:0 0 0 9px rgba(220,53,69,.02)}
+}
+@media (prefers-color-scheme: dark){
+  .chat{
+    background:
+      radial-gradient(circle at 15% 12%,rgba(16,163,127,.07),transparent 28%),
+      radial-gradient(circle at 88% 72%,rgba(80,110,255,.06),transparent 30%),var(--page);
+  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============================================================
+       HEADER
+  ============================================================ -->
+  <header class="header">
+    <div class="brand">
+      <div class="bot-icon">
+        <img src="./images/bot.png" alt="NOC Assistant">
+      </div>
+      <div class="bot-info">
+        <div class="bot-title" id="botTitle">NOC</div>
+        <div class="bot-status">
+          <span class="status-dot"></span>
+          <span id="botStatus">Online</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="https://nocadmins.github.io/noc-assistant.html" target="_blank" title="Open in new window" aria-label="Open in new window">
+        <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+      <button class="btn-change" id="changeUserBtn">
+        <i class="bi bi-arrow-repeat"></i>
+        Switch
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       CHAT
+  ============================================================ -->
+  <main class="chat" id="chat"></main>
+
+  <!-- ============================================================
+       COMPOSER
+  ============================================================ -->
+  <form class="composer" id="chatForm" autocomplete="off">
+    <div class="input-wrapper">
+      <div class="composer-orb" aria-hidden="true"></div>
+      <textarea id="questionInput" class="question-input"
+        placeholder="Ask anything about NOC..." rows="1" autocomplete="off"
+        aria-label="Type your question"></textarea>
+      <button class="mic-btn" id="micBtn" type="button" title="Voice input" aria-label="Voice input">
+        <i class="bi bi-mic-fill"></i>
+      </button>
+      <button class="send-btn" id="sendBtn" type="submit" title="Send message" aria-label="Send message">
+      <i class="bi bi-arrow-up"></i>
+    </button>
+    </div>
+
+  </form>
+
+</div>
+
+<!-- ============================================================
+     USER SETUP MODAL
+============================================================ -->
+<div class="modal-backdrop" id="userModal">
+  <div class="modal">
+    <div class="modal-icon">
+      <i class="bi bi-person-plus"></i>
+    </div>
+    <h2>Welcome</h2>
+    <p>Please enter your name and treasury/branch code to start using the NOC Assistant.</p>
+
+    <div class="field floating-field">
+      <input id="nameInput" type="text" placeholder=" " autocomplete="name">
+      <label for="nameInput">Your Name</label>
+    </div>
+
+    <div class="field floating-field">
+      <input id="brInput" type="text" placeholder=" " autocomplete="off">
+      <label for="brInput">Treasury/Branch Code</label>
+      <div class="br-help">Accepts: BR0101, BR101, br101, BR 101, or 101</div>
+      <div class="branch-info" id="branchInfo"></div>
+    </div>
+
+    <div class="modal-error" id="modalError"></div>
+
+    <button class="btn-primary" id="saveUserBtn" type="button">Continue</button>
+  </div>
+</div>
+
+<script>
+  /* ============================================================
+     CONFIGURATION
+  ============================================================ */
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyPvBXxVMpnQmMy9UuLFFMryhBfimnMSqxHBceIKcvpYVieX-dJmIdWFP_SUDhXatnl/exec';
+
+  const STORAGE_KEYS = {
+    NAME: 'treasury_chat_user_name',
+    BR_CODE: 'treasury_chat_br_code',
+    BRANCH: 'treasury_chat_branch'
+  };
+
+  /* ============================================================
+     CHAT SOUNDS
+  ============================================================ */
+  const receivedSound = new Audio('./sounds/bubble-received.mp3');
+  const sentSound = new Audio('./sounds/bubble-send.mp3');
+  receivedSound.preload = 'auto';
+  sentSound.preload = 'auto';
+
+  function playChatSound(audio) {
+    try {
+      audio.currentTime = 0;
+      const promise = audio.play();
+      if (promise && promise.catch) promise.catch(function(){});
+    } catch (e) {}
+  }
+
+  /* Browsers require a user gesture before allowing audio playback. */
+  let audioUnlocked = false;
+  function unlockChatSounds() {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    [receivedSound, sentSound].forEach(function(audio) {
+      const oldVolume = audio.volume;
+      audio.volume = 0;
+      const promise = audio.play();
+      if (promise && promise.then) {
+        promise.then(function() {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.volume = oldVolume;
+        }).catch(function() {
+          audio.volume = oldVolume;
+        });
+      } else {
+        audio.volume = oldVolume;
+      }
+    });
+  }
+  document.addEventListener('pointerdown', unlockChatSounds, {once:false, passive:true});
+  document.addEventListener('keydown', unlockChatSounds, {once:false});
+
+  /* ============================================================
+     DOM REFS
+  ============================================================ */
+  const chat = document.getElementById('chat');
+  const questionInput = document.getElementById('questionInput');
+  const chatForm = document.getElementById('chatForm');
+  const sendBtn = document.getElementById('sendBtn');
+  const micBtn = document.getElementById('micBtn');
+  const userModal = document.getElementById('userModal');
+  const nameInput = document.getElementById('nameInput');
+  const brInput = document.getElementById('brInput');
+  const saveUserBtn = document.getElementById('saveUserBtn');
+  const modalError = document.getElementById('modalError');
+  const branchInfo = document.getElementById('branchInfo');
+  const changeUserBtn = document.getElementById('changeUserBtn');
+  const botTitle = document.getElementById('botTitle');
+
+  /* Keep the last message above the fixed mobile composer. */
+  function updateChatBottomPadding() {
+    const composer = document.getElementById('chatForm');
+    if (!composer || !chat) return;
+
+    if (window.matchMedia('(max-width:900px)').matches) {
+      chat.style.paddingBottom = Math.ceil(composer.getBoundingClientRect().height + 48) + 'px';
+    } else {
+      chat.style.paddingBottom = '';
+    }
+  }
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  let userName = localStorage.getItem(STORAGE_KEYS.NAME) || '';
+  let brCode = localStorage.getItem(STORAGE_KEYS.BR_CODE) || '';
+  let branch = null;
+  let waiting = false;
+  let currentSuggestions = [];
+  let isAwaitingSuggestionResponse = false;
+  let pendingQuestion = '';
+  let lastSubmittedQuestion = '';
+  let recognition = null;
+  let isListening = false;
+  let voiceBaseText = '';
+
+  /* ============================================================
+     COMPOSER PLACEHOLDER
+     ============================================================ */
+  const defaultPlaceholders = [
+    'Ask a question',
+	'example: Gateway Ip of 0101?',
+	'treasury intranet applications are not resolving?',
+    'or enter any topic or keywords',
+	'example: SDWAN',
+	'FatPipe',
+	'TrendMicro-XDR'
+	
+  ];
+  let placeholderTimer = null;
+  let placeholderTypingTimer = null;
+  let placeholderIndex = 0;
+  let discussedSubject = '';
+
+  function setComposerPlaceholder(text) {
+    if (!questionInput) return;
+    questionInput.placeholder = text || '';
+  }
+
+  function stopPlaceholderAnimation() {
+    if (placeholderTimer) {
+      clearTimeout(placeholderTimer);
+      placeholderTimer = null;
+    }
+    if (placeholderTypingTimer) {
+      clearTimeout(placeholderTypingTimer);
+      placeholderTypingTimer = null;
+    }
+    questionInput.classList.remove('placeholder-fade');
+  }
+
+  function typePlaceholder(text, done) {
+    stopPlaceholderAnimation();
+
+    const reducedMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reducedMotion) {
+      setComposerPlaceholder(text);
+      if (done) done();
+      return;
+    }
+
+    let i = 0;
+    setComposerPlaceholder('');
+
+    function typeNext() {
+      if (i <= text.length) {
+        setComposerPlaceholder(text.slice(0, i));
+        i++;
+        placeholderTypingTimer = setTimeout(typeNext, 45);
+      } else if (done) {
+        placeholderTimer = setTimeout(done, 1500);
+      }
+    }
+    typeNext();
+  }
+
+  function startDefaultPlaceholderAnimation() {
+    stopPlaceholderAnimation();
+
+    if (discussedSubject || waiting || isAwaitingSuggestionResponse) return;
+
+    function showNext() {
+      if (discussedSubject || waiting || isAwaitingSuggestionResponse) return;
+
+      const text = defaultPlaceholders[placeholderIndex];
+      placeholderIndex = (placeholderIndex + 1) % defaultPlaceholders.length;
+
+      typePlaceholder(text, function() {
+        if (discussedSubject || waiting || isAwaitingSuggestionResponse) return;
+
+        questionInput.classList.add('placeholder-fade');
+        placeholderTimer = setTimeout(function() {
+          questionInput.classList.remove('placeholder-fade');
+          showNext();
+        }, 350);
+      });
+    }
+
+    showNext();
+  }
+
+  function makeDiscussedSubject(question) {
+    let subject = String(question || '').trim();
+
+    // Remove common conversational/question prefixes while keeping
+    // the actual topic meaningful and readable.
+    subject = subject
+      .replace(/^(please\s+)?(can you|could you|would you|tell me|show me|give me|what is|what's|what are|where is|where are|how do i|how can i|how to)\s+/i, '')
+      .replace(/[?!.]+$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!subject) subject = String(question || '').trim();
+
+    // Keep the reply placeholder compact.
+    if (subject.length > 48) {
+      subject = subject.slice(0, 48).replace(/\s+\S*$/, '') + '…';
+    }
+
+    return subject;
+  }
+
+  function setReplyPlaceholder(question) {
+    stopPlaceholderAnimation();
+    discussedSubject = makeDiscussedSubject(question);
+
+    if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+  }
+
+  /* ============================================================
+     INIT
+  ============================================================ */
+  document.addEventListener('DOMContentLoaded', function() {
+    updateChatBottomPadding();
+    setupVoiceInput();
+
+    const composer = document.getElementById('chatForm');
+    if (window.ResizeObserver && composer) {
+      new ResizeObserver(updateChatBottomPadding).observe(composer);
+    }
+
+    window.addEventListener('resize', updateChatBottomPadding);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateChatBottomPadding);
+      window.visualViewport.addEventListener('scroll', updateChatBottomPadding);
+    }
+
+    loadConfig();
+
+    if (userName && brCode) {
+      loadStoredBranch();
+    } else {
+      showUserModal();
+    }
+
+    questionInput.focus();
+    startDefaultPlaceholderAnimation();
+  });
+
+  /* ============================================================
+     LOAD CONFIG
+  ============================================================ */
+  function loadConfig() {
+    jsonp('config', {}, function(response) {
+      if (response && response.success && response.botName) {
+        botTitle.textContent = response.botName;
+      }
+    });
+  }
+
+  /* ============================================================
+     LOAD STORED BRANCH
+  ============================================================ */
+  function loadStoredBranch() {
+    const storedBranch = localStorage.getItem(STORAGE_KEYS.BRANCH);
+    if (storedBranch) {
+      try {
+        branch = JSON.parse(storedBranch);
+      } catch (e) {
+        branch = null;
+      }
+    }
+
+    validateBranch(brCode, function(response) {
+      if (response && response.success && response.valid) {
+        branch = response.branch;
+        localStorage.setItem(STORAGE_KEYS.BRANCH, JSON.stringify(branch));
+        showWelcome();
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.BRANCH);
+        showUserModal();
+      }
+    });
+  }
+
+  /* ============================================================
+     USER MODAL
+  ============================================================ */
+  function showUserModal() {
+    modalError.classList.remove('show');
+    modalError.textContent = '';
+    nameInput.value = userName || '';
+    brInput.value = brCode || '';
+    branchInfo.classList.remove('show');
+    userModal.classList.add('show');
+
+    setTimeout(function() {
+      if (!nameInput.value) {
+        nameInput.focus();
+      } else {
+        brInput.focus();
+      }
+    }, 100);
+  }
+
+  function hideUserModal() {
+    userModal.classList.remove('show');
+  }
+
+  /* ============================================================
+     SAVE USER
+  ============================================================ */
+  saveUserBtn.addEventListener('click', saveUserDetails);
+
+  function saveUserDetails() {
+    const name = nameInput.value.trim();
+    const enteredBR = brInput.value.trim();
+
+    if (!name) {
+      showModalError('Please enter your name.');
+      nameInput.focus();
+      return;
+    }
+
+    if (!enteredBR) {
+      showModalError('Please enter your BR Code.');
+      brInput.focus();
+      return;
+    }
+
+    setModalLoading(true);
+
+    validateBranch(enteredBR, function(response) {
+      setModalLoading(false);
+
+      if (!response || !response.success) {
+        showModalError('Unable to validate BR Code. Please try again.');
+        return;
+      }
+
+      if (!response.valid) {
+        showModalError(response.message || 'Invalid or inactive BR Code.');
+        return;
+      }
+
+      userName = name;
+      brCode = response.branch.brCode;
+      branch = response.branch;
+
+      localStorage.setItem(STORAGE_KEYS.NAME, userName);
+      localStorage.setItem(STORAGE_KEYS.BR_CODE, brCode);
+      localStorage.setItem(STORAGE_KEYS.BRANCH, JSON.stringify(branch));
+
+      hideUserModal();
+      clearChat();
+      showWelcome();
+    });
+  }
+
+  /* ============================================================
+     CHANGE USER
+  ============================================================ */
+  changeUserBtn.addEventListener('click', function() {
+    nameInput.value = userName;
+    brInput.value = brCode;
+    modalError.classList.remove('show');
+    branchInfo.classList.remove('show');
+    userModal.classList.add('show');
+    nameInput.focus();
+  });
+
+  /* ============================================================
+     BR CODE INPUT
+  ============================================================ */
+  brInput.addEventListener('blur', function() {
+    const value = brInput.value.trim();
+    if (!value) return;
+
+    validateBranch(value, function(response) {
+      if (response && response.success && response.valid) {
+        branchInfo.textContent = response.branch.branchName +
+          (response.branch.district ? ' — ' + response.branch.district : '');
+        branchInfo.classList.add('show');
+      } else {
+        branchInfo.classList.remove('show');
+      }
+    });
+  });
+
+  /* ============================================================
+     VALIDATE BRANCH
+  ============================================================ */
+  function validateBranch(value, callback) {
+    jsonp('validatebranch', { brCode: value }, callback);
+  }
+
+  /* ============================================================
+     WELCOME
+  ============================================================ */
+  function showWelcome() {
+    const branchName = branch && branch.branchName ? branch.branchName : 'your branch';
+    addBotMessage(
+      'Hello <strong>' + escapeHtml(userName) + '</strong>!<br><br>' +
+      'You are connected to <strong>' + escapeHtml(branchName) + '</strong> ' +
+      '(' + escapeHtml(brCode) + ').<br><br>' +
+        ' (Default answers will be related to '+
+      '(' + escapeHtml(brCode)+', If you need details for another branch, please mention its 4-digit office code as well to get more accurate results.)'+'<br><br>'+
+      'How can I help you today? '
+    );
+  }
+
+  /* ============================================================
+     CHAT SUBMIT
+  ============================================================ */
+  chatForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+    if (isAwaitingSuggestionResponse) {
+      handleSuggestionResponse();
+    } else {
+      sendQuestion();
+    }
+  });
+
+  /* ============================================================
+     ENTER KEY
+  ============================================================ */
+  questionInput.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (isAwaitingSuggestionResponse) {
+        handleSuggestionResponse();
+      } else {
+        sendQuestion();
+      }
+    }
+  });
+
+  /* ============================================================
+     HANDLE SUGGESTION RESPONSE
+  ============================================================ */
+  function handleSuggestionResponse() {
+    const input = questionInput.value.trim();
+    if (!input) return;
+
+    const match = input.match(/^(?:question\s*)?(\d+)$/i);
+    const noneNumber = currentSuggestions.length + 1;
+
+    if (!match) {
+      isAwaitingSuggestionResponse = false;
+      currentSuggestions = [];
+      pendingQuestion = '';
+      if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+      sendQuestion();
+      return;
+    }
+
+    const selectedNumber = parseInt(match[1], 10);
+
+    if (selectedNumber === noneNumber) {
+      addUserMessage(escapeHtml(input));
+      submitUnansweredQuery(pendingQuestion);
+      return;
+    }
+
+    if (selectedNumber < 1 || selectedNumber > currentSuggestions.length) {
+      addBotMessage('Please provide a question number within the range 1-' + noneNumber + '.');
+      questionInput.value = '';
+      questionInput.focus();
+      return;
+    }
+
+    const suggestion = currentSuggestions[selectedNumber - 1];
+    setReplyPlaceholder(suggestion.question);
+    addUserMessage(escapeHtml(input));
+    sendSuggestedQuestion(suggestion.question);
+  }
+
+  function sendSuggestedQuestion(suggestedQuestion) {
+    isAwaitingSuggestionResponse = false;
+    currentSuggestions = [];
+    pendingQuestion = '';
+    questionInput.value = '';
+    if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+    autoResize();
+
+    const typingId = showTyping();
+    waiting = true;
+    sendBtn.disabled = true;
+
+    jsonp('askexact', {
+      name: userName,
+      brCode: brCode,
+      question: suggestedQuestion
+    }, function(response) {
+      removeTyping(typingId);
+      waiting = false;
+      sendBtn.disabled = false;
+
+      if (!response) {
+        addBotMessage('Unable to contact the chatbot server.');
+        return;
+      }
+
+      if (!response.success) {
+        addBotMessage(escapeHtml(response.error || 'Unable to process your question.'));
+        return;
+      }
+
+      if (response.answered === true) {
+        lastSubmittedQuestion = suggestedQuestion;
+        renderAnswer(response);
+        return;
+      }
+
+      if (response.suggestions && response.suggestions.length > 0) {
+        showSuggestions(response.suggestions, suggestedQuestion);
+        return;
+      }
+
+      let html = escapeHtml(response.answer || 'Sorry, I could not find a suitable answer.');
+      if (response.queryId) {
+        html += '<div class="query-id">Query ID: <strong>' + escapeHtml(response.queryId) + '</strong></div>';
+      }
+      addBotMessage(html);
+    });
+  }
+
+  /* ============================================================
+     SUBMIT UNANSWERED QUERY
+  ============================================================ */
+  function submitUnansweredQuery(question) {
+    isAwaitingSuggestionResponse = false;
+    currentSuggestions = [];
+    pendingQuestion = '';
+    if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+
+    waiting = true;
+    sendBtn.disabled = true;
+
+    jsonp('unanswered', {
+      name: userName,
+      brCode: brCode,
+      question: question
+    }, function(response) {
+      waiting = false;
+      sendBtn.disabled = false;
+      questionInput.value = '';
+      autoResize();
+      questionInput.focus();
+
+      if (!response) {
+        addBotMessage('Unable to contact the chatbot server.');
+        return;
+      }
+
+      if (!response.success) {
+        addBotMessage(escapeHtml(response.error || 'Unable to submit your question.'));
+        return;
+      }
+
+      let html = 'Your question has been sent for review.';
+      if (response.queryId) {
+        html += '<div class="query-id">Query ID: <strong>' + escapeHtml(response.queryId) + '</strong></div>';
+      }
+      addBotMessage(html);
+    });
+  }
+
+  /* ============================================================
+     SEND QUESTION
+  ============================================================ */
+  function sendQuestion() {
+    if (waiting) return;
+
+    isAwaitingSuggestionResponse = false;
+    currentSuggestions = [];
+    if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+
+    const question = questionInput.value.trim();
+    lastSubmittedQuestion = question;
+
+    if (!question) return;
+
+    // After the first query, keep the composer contextual to the
+    // subject currently being discussed.
+    setReplyPlaceholder(question);
+
+    if (!userName || !brCode) {
+      showUserModal();
+      return;
+    }
+
+    addUserMessage(escapeHtml(question));
+    questionInput.value = '';
+    autoResize();
+
+    const typingId = showTyping();
+    waiting = true;
+    sendBtn.disabled = true;
+
+    jsonp('ask', {
+      name: userName,
+      brCode: brCode,
+      question: question
+    }, function(response) {
+      removeTyping(typingId);
+      waiting = false;
+      sendBtn.disabled = false;
+
+      if (!response) {
+        addBotMessage('Unable to contact the chatbot server.');
+        return;
+      }
+
+      if (!response.success) {
+        addBotMessage(escapeHtml(response.error || 'Unable to process your question.'));
+        return;
+      }
+
+      if (response.answered === true) {
+        renderAnswer(response);
+        return;
+      }
+
+      if (response.suggestions && response.suggestions.length > 0) {
+        showSuggestions(response.suggestions, question);
+        return;
+      }
+
+      let html = escapeHtml(response.answer || 'Sorry, I could not find a suitable answer.');
+      if (response.queryId) {
+        html += '<div class="query-id">Query ID: <strong>' + escapeHtml(response.queryId) + '</strong></div>';
+      }
+      addBotMessage(html);
+    });
+  }
+
+  /* ============================================================
+     SHOW SUGGESTIONS
+  ============================================================ */
+  function showSuggestions(suggestions, originalQuestion) {
+    isAwaitingSuggestionResponse = true;
+    currentSuggestions = suggestions || [];
+    pendingQuestion = originalQuestion || '';
+
+    let html = '<br><hr><div class="suggestion-prompt">See also — related questions:</div>';
+
+    currentSuggestions.forEach(function(suggestion, index) {
+      const num = index + 1;
+      html +=
+        '<button type="button" class="suggestion-item suggestion-question" data-suggestion-index="' + index + '">' +
+        '<strong>' + num + '.</strong> ' + escapeHtml(suggestion.question || 'Question ' + num) +
+        '</button>';
+    });
+
+    html +=
+      '<button type="button" class="suggestion-item none no-answer-link" data-no-exact-answer="1">' +
+      'I can\'t find what I\'m looking for' +
+      '</button>';
+
+    html += '<div class="suggestion-hint">Click a related question above or type a new question.</div>';
+
+    addBotMessage(html);
+    bindSuggestionPanel_();
+    questionInput.focus();
+    stopPlaceholderAnimation();
+    setComposerPlaceholder('Click a related question or type...');
+  }
+
+  function bindSuggestionPanel_() {
+    const suggestionButtons = chat.querySelectorAll('[data-suggestion-index]');
+    suggestionButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const index = parseInt(button.getAttribute('data-suggestion-index'), 10);
+        if (isNaN(index) || !currentSuggestions[index]) return;
+
+        const suggestion = currentSuggestions[index];
+        setReplyPlaceholder(suggestion.question);
+        addUserMessage(escapeHtml(suggestion.question || 'Question ' + (index + 1)));
+        sendSuggestedQuestion(suggestion.question);
+      });
+    });
+
+    const buttons = chat.querySelectorAll('[data-no-exact-answer="1"]');
+    const button = buttons[buttons.length - 1];
+    if (button) {
+      button.addEventListener('click', function() {
+        const question = pendingQuestion;
+        addUserMessage('I can\'t find what I\'m looking for');
+        submitUnansweredQuery(question);
+      });
+    }
+  }
+
+  /* ============================================================
+     RENDER ANSWER
+  ============================================================ */
+  function renderAnswer(response) {
+    let answer = response.answer || '';
+    let sourceInfo = '';
+
+    if (response.matchType === 'EXACT') {
+      sourceInfo = 'Showing result for: Exact Question Match';
+    } else if (response.matchType === 'EXTERNAL') {
+      sourceInfo = response.lookupBR
+        ? 'Showing result for: ' + response.lookupBR + ' (External Source)'
+        : 'Showing result for: External Source';
+    } else if (response.matchType === 'BRANCH_LOOKUP' || response.lookupBR) {
+      sourceInfo = 'Showing result for: ' + (response.lookupBR || brCode);
+    } else if (response.matchType === 'KEYWORD') {
+      sourceInfo = 'Showing result for: Keyword Match';
+    } else if (response.source === 'External_Sources') {
+      sourceInfo = response.lookupBR
+        ? 'Showing result for: ' + response.lookupBR + ' (External Source)'
+        : 'Showing result for: External Source';
+    } else {
+      sourceInfo = 'Showing result for: ' + (response.lookupBR || brCode);
+    }
+
+    let contentHtml;
+    if (String(response.answerType || '').toUpperCase() === 'HTML') {
+      contentHtml = answer;
+    } else {
+      contentHtml = escapeHtml(answer).replace(/\n/g, '<br>');
+    }
+
+    if (response.suggestions && response.suggestions.length > 0) {
+      contentHtml += buildSuggestionHtml_(response.suggestions);
+    }
+
+    addBotMessageWithSource(contentHtml, sourceInfo, 'HTML');
+
+    if (response.suggestions && response.suggestions.length > 0) {
+      bindSuggestionPanel_();
+    }
+  }
+
+  function buildSuggestionHtml_(suggestions) {
+    currentSuggestions = suggestions || [];
+    pendingQuestion = lastSubmittedQuestion;
+    isAwaitingSuggestionResponse = true;
+
+    let html = '<br><br><div style="border-top: 1px solid rgba(128, 128, 128, 0.15);"></div><div  class="suggestion-prompt">See also — related questions:</div>';
+
+    currentSuggestions.forEach(function(suggestion, index) {
+      const num = index + 1;
+      html +=
+        '<button type="button" class="suggestion-item suggestion-question" data-suggestion-index="' + index + '">' +
+        '<strong>' + num + '.</strong> ' + escapeHtml(suggestion.question || 'Question ' + num) +
+        '</button>';
+    });
+
+    html +=
+      '<button type="button" class="suggestion-item none no-answer-link" data-no-exact-answer="1">' +
+      'I can\'t find what I\'m looking for' +
+      '</button>';
+
+    html += '<div class="suggestion-hint"> </div>';
+
+    return html;
+  }
+
+  /* ============================================================
+     ADD USER MESSAGE
+  ============================================================ */
+  function addUserMessage(html) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message user';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    const content = document.createElement('div');
+    content.className = 'bubble-content';
+    content.innerHTML = html;
+    bubble.appendChild(content);
+
+    const footer = document.createElement('div');
+    footer.className = 'bubble-footer';
+
+    const leftSpan = document.createElement('span');
+    leftSpan.style.visibility = 'hidden';
+    leftSpan.textContent = ' ';
+
+    const timestampSpan = document.createElement('span');
+    timestampSpan.className = 'timestamp';
+    timestampSpan.textContent = getCurrentTimestamp();
+
+    footer.appendChild(leftSpan);
+    footer.appendChild(timestampSpan);
+    bubble.appendChild(footer);
+
+    wrapper.appendChild(bubble);
+    chat.appendChild(wrapper);
+    playChatSound(sentSound);
+    scrollChat();
+  }
+
+  /* ============================================================
+     ADD BOT MESSAGE
+  ============================================================ */
+  function addBotMessage(html) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message bot';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    const content = document.createElement('div');
+    content.className = 'bubble-content';
+    content.innerHTML = html;
+    bubble.appendChild(content);
+
+    const footer = document.createElement('div');
+    footer.className = 'bubble-footer';
+
+    const leftSpan = document.createElement('span');
+    leftSpan.style.visibility = 'hidden';
+    leftSpan.textContent = ' ';
+
+    const timestampSpan = document.createElement('span');
+    timestampSpan.className = 'timestamp';
+    timestampSpan.textContent = getCurrentTimestamp();
+
+    footer.appendChild(leftSpan);
+    footer.appendChild(timestampSpan);
+    bubble.appendChild(footer);
+
+    wrapper.appendChild(bubble);
+    chat.appendChild(wrapper);
+    playChatSound(receivedSound);
+    scrollChat();
+  }
+
+  /* ============================================================
+     ADD BOT MESSAGE WITH SOURCE
+  ============================================================ */
+  function addBotMessageWithSource(html, sourceInfo, answerType) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message bot';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+
+    const content = document.createElement('div');
+    content.className = 'bubble-content';
+
+    if (answerType && answerType.toUpperCase() === 'HTML') {
+      content.innerHTML = html;
+    } else {
+      content.innerHTML = html;
+    }
+    bubble.appendChild(content);
+
+    const footer = document.createElement('div');
+    footer.className = 'bubble-footer';
+
+    const sourceSpan = document.createElement('span');
+    sourceSpan.className = 'source';
+    sourceSpan.textContent = sourceInfo;
+
+    const timestampSpan = document.createElement('span');
+    timestampSpan.className = 'timestamp';
+    timestampSpan.textContent = getCurrentTimestamp();
+
+    footer.appendChild(sourceSpan);
+    footer.appendChild(timestampSpan);
+    bubble.appendChild(footer);
+
+    wrapper.appendChild(bubble);
+    chat.appendChild(wrapper);
+    playChatSound(receivedSound);
+    scrollChat();
+  }
+
+  /* ============================================================
+     TIMESTAMP
+  ============================================================ */
+  function getCurrentTimestamp() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return hours + ':' + minutes + ':' + seconds + ' • ' + day + '/' + month + '/' + year;
+  }
+
+  /* ============================================================
+     TYPING
+  ============================================================ */
+  function showTyping() {
+    const id = 'typing-' + Date.now();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message bot';
+    wrapper.id = id;
+    wrapper.innerHTML =
+      '<div class="bubble">' +
+        '<div class="typing">' +
+          '<span></span><span></span><span></span>' +
+        '</div>' +
+      '</div>';
+    chat.appendChild(wrapper);
+    scrollChat();
+    return id;
+  }
+
+  function removeTyping(id) {
+    const element = document.getElementById(id);
+    if (element) element.remove();
+  }
+
+  /* ============================================================
+     UTILITIES
+  ============================================================ */
+  function clearChat() {
+    chat.innerHTML = '';
+  }
+
+  function scrollChat() {
+    updateChatBottomPadding();
+
+    const scrollToBottom = function() {
+      updateChatBottomPadding();
+      chat.scrollTop = Math.max(0, chat.scrollHeight - chat.clientHeight);
+    };
+
+    requestAnimationFrame(function() {
+      scrollToBottom();
+      requestAnimationFrame(function() {
+        scrollToBottom();
+      });
+    });
+
+    setTimeout(scrollToBottom, 80);
+    setTimeout(scrollToBottom, 180);
+  }
+
+  function autoResize() {
+    questionInput.style.height = 'auto';
+    questionInput.style.height = Math.min(questionInput.scrollHeight, 120) + 'px';
+    updateChatBottomPadding();
+  }
+
+  questionInput.addEventListener('input', function() {
+    if (questionInput.value.trim()) {
+      stopPlaceholderAnimation();
+    } else if (!isListening && !isAwaitingSuggestionResponse && !waiting) {
+      if (discussedSubject) {
+        setComposerPlaceholder('Reply to ' + discussedSubject);
+      } else {
+        startDefaultPlaceholderAnimation();
+      }
+    }
+    autoResize();
+  });
+
+  function showModalError(message) {
+    modalError.textContent = message;
+    modalError.classList.add('show');
+  }
+
+  function setModalLoading(loading) {
+    saveUserBtn.disabled = loading;
+    saveUserBtn.textContent = loading ? 'Validating...' : 'Continue';
+  }
+
+  /* ============================================================
+     VOICE INPUT
+     Browser Web Speech API - speech to text for the composer.
+  ============================================================ */
+  function setupVoiceInput() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      micBtn.title = 'Voice input is not supported in this browser';
+      micBtn.setAttribute('aria-label', 'Voice input is not supported');
+      micBtn.style.opacity = '.45';
+      micBtn.style.cursor = 'not-allowed';
+      return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = navigator.language || 'en-IN';
+
+    recognition.onstart = function() {
+      isListening = true;
+      voiceBaseText = questionInput.value.trim();
+      micBtn.classList.add('listening');
+      micBtn.innerHTML = '<i class="bi bi-stop-fill"></i>';
+      micBtn.title = 'Stop voice input';
+      stopPlaceholderAnimation();
+      setComposerPlaceholder('Listening… speak now');
+    };
+
+    recognition.onresult = function(event) {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      transcript = transcript.trim();
+      if (!transcript) return;
+      questionInput.value = voiceBaseText
+        ? voiceBaseText + (voiceBaseText.endsWith(' ') ? '' : ' ') + transcript
+        : transcript;
+      autoResize();
+    };
+
+    recognition.onerror = function(event) {
+      stopVoiceUI();
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        addBotMessage('Microphone access was blocked. Please allow microphone permission in your browser and try again.');
+      } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
+        addBotMessage('Voice input could not be started. Please try again.');
+      }
+    };
+
+    recognition.onend = function() {
+      stopVoiceUI();
+      questionInput.focus();
+    };
+  }
+
+  function stopVoiceUI() {
+    isListening = false;
+    micBtn.classList.remove('listening');
+    micBtn.innerHTML = '<i class="bi bi-mic-fill"></i>';
+    micBtn.title = 'Voice input';
+    if (isAwaitingSuggestionResponse) {
+      stopPlaceholderAnimation();
+      setComposerPlaceholder('Click a related question or type...');
+    } else if (discussedSubject) {
+      setComposerPlaceholder('Reply to ' + discussedSubject);
+    } else {
+      startDefaultPlaceholderAnimation();
+    }
+  }
+
+  function toggleVoiceInput() {
+    if (!recognition) {
+      addBotMessage('Voice input is not supported by this browser. Please use a browser with Web Speech API support.');
+      return;
+    }
+    if (isListening) {
+      recognition.stop();
+      return;
+    }
+    try {
+      voiceBaseText = questionInput.value.trim();
+      recognition.start();
+    } catch (e) {
+      stopVoiceUI();
+    }
+  }
+
+  micBtn.addEventListener('click', toggleVoiceInput);
+
+  /* ============================================================
+     JSONP CLIENT
+  ============================================================ */
+  function jsonp(action, params, callback) {
+    if (!API_URL || API_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL') {
+      callback({
+        success: false,
+        error: 'Apps Script API URL has not been configured.'
+      });
+      return;
+    }
+
+    const callbackName = 'treasuryCallback_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    const script = document.createElement('script');
+    const query = new URLSearchParams();
+
+    query.set('action', action);
+    query.set('callback', callbackName);
+
+    Object.keys(params || {}).forEach(function(key) {
+      query.set(key, params[key]);
+    });
+
+    const timeout = setTimeout(function() {
+      cleanup();
+      callback({
+        success: false,
+        error: 'The server did not respond in time.'
+      });
+    }, 30000);
+
+    window[callbackName] = function(data) {
+      clearTimeout(timeout);
+      cleanup();
+      callback(data);
+    };
+
+    script.onerror = function() {
+      clearTimeout(timeout);
+      cleanup();
+      callback({
+        success: false,
+        error: 'Unable to connect to the chatbot API.'
+      });
+    };
+
+    script.src = API_URL + (API_URL.indexOf('?') >= 0 ? '&' : '?') + query.toString();
+    document.head.appendChild(script);
+
+    function cleanup() {
+      try {
+        delete window[callbackName];
+      } catch (e) {
+        window[callbackName] = undefined;
+      }
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    }
+  }
+
+  /* ============================================================
+     HTML ESCAPE
+  ============================================================ */
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+  /* ============================================================
+     PWA INSTALL PROMPT
+  ============================================================ */
+  let deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(event) {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (!sessionStorage.getItem('nocInstallPromptShown')) {
+      sessionStorage.setItem('nocInstallPromptShown', '1');
+      setTimeout(function() {
+        if (deferredInstallPrompt && confirm('Install NOC Assistant as an app on your device?')) {
+          deferredInstallPrompt.prompt();
+          deferredInstallPrompt.userChoice.finally(function() {
+            deferredInstallPrompt = null;
+          });
+        }
+      }, 1200);
+    }
+  });
+  window.addEventListener('appinstalled', function() {
+    deferredInstallPrompt = null;
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('./sw.js').catch(function(error) {
+        console.warn('Service worker registration failed:', error);
+      });
+    });
+  }
+
+</script>
+
+</body>
+</html>
