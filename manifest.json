@@ -1,6 +1,6 @@
 {
   "name": "NOC Assistant",
-  "short_name": "NOC",
+  "short_name": "NOC Assistant",
   "description": "NOC Assistant chatbot for treasury/branch queries",
   "start_url": "./",
   "scope": "./",
