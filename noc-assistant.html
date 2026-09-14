@@ -4,19 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
   <title>NOC Assistant</title>
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#202123">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NOC">
+  <link rel="apple-touch-icon" href="./images/bot.png">
+
+  <!-- Capture beforeinstallprompt as early as possible -->
+  <script>
+    window.__deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__deferredInstallPrompt = e;
+      // If the main script is already loaded, show the banner immediately
+      if (typeof window.__showInstallBanner === 'function') {
+        window.__showInstallBanner();
+      }
+    });
+  </script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
-  
+
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  
+
   <style>
 :root{
   --nav:#202123; --nav-hover:#343541;
@@ -184,6 +200,53 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   }
 }
 
+/* ============================================================
+   PWA INSTALL BANNER
+============================================================ */
+.install-banner{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 108px);
+  transform:translateX(-50%);
+  z-index:120;
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,#17181a 0%,#232427 60%,#1d2b29 100%);
+  color:#fff;
+  padding:11px 12px 11px 14px;
+  border-radius:14px;
+  box-shadow:0 14px 36px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.06);
+  font-size:13px;
+  max-width:min(440px,calc(100% - 32px));
+  width:max-content;
+  animation:installBannerIn .35s ease-out;
+}
+@keyframes installBannerIn{
+  from{opacity:0;transform:translate(-50%,12px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+.install-banner .ib-icon{
+  width:30px;height:30px;border-radius:9px;overflow:hidden;flex:0 0 30px;
+  background:#10a37f;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(255,255,255,.12);
+}
+.install-banner .ib-icon img{width:100%;height:100%;object-fit:cover;display:block}
+.install-banner .ib-text{flex:1;min-width:0;line-height:1.35}
+.install-banner .ib-text strong{display:block;font-weight:600;font-size:13px;letter-spacing:-.1px}
+.install-banner .ib-text span{font-size:11.5px;color:#b9bbbe}
+.install-banner .ib-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+.install-banner button{
+  font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;
+  border:0;border-radius:9px;padding:8px 12px;line-height:1;transition:.18s;
+}
+.install-banner .ib-install{background:#10a37f;color:#fff}
+.install-banner .ib-install:hover{background:#0d8e6e}
+.install-banner .ib-later{
+  background:transparent;color:#b9bbbe;padding:8px 10px;
+}
+.install-banner .ib-later:hover{background:rgba(255,255,255,.08);color:#fff}
+@media (max-width:400px){
+  .install-banner{font-size:12px;padding:10px 10px 10px 12px;gap:8px}
+  .install-banner .ib-text span{display:none}
+  .install-banner button{padding:7px 10px;font-size:11.5px}
+}
 </style>
 </head>
 <body>
@@ -207,9 +270,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       </div>
     </div>
     <div class="header-actions">
-      <a href="https://nocadmins.github.io/noc-assistant.html" target="_blank" title="Open in new window" aria-label="Open in new window">
-        <i class="bi bi-box-arrow-up-right"></i>
-      </a>
+
       <button class="btn-change" id="changeUserBtn">
         <i class="bi bi-arrow-repeat"></i>
         Switch
@@ -380,7 +441,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 	'example: SDWAN',
 	'FatPipe',
 	'TrendMicro-XDR'
-	
+
   ];
   let placeholderTimer = null;
   let placeholderTypingTimer = null;
@@ -1416,29 +1477,88 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
   /* ============================================================
      PWA INSTALL PROMPT
+     Shows a friendly in-page banner when the browser fires
+     `beforeinstallprompt`. The event may have already fired
+     before this script ran — we read it from window.
   ============================================================ */
-  let deferredInstallPrompt = null;
+  let deferredInstallPrompt = window.__deferredInstallPrompt || null;
+
+  function showInstallBanner() {
+    if (!deferredInstallPrompt) return;
+    if (document.getElementById('installBanner')) return;
+    if (sessionStorage.getItem('nocInstallDismissed') === '1') return;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (window.navigator.standalone === true) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'installBanner';
+    banner.className = 'install-banner';
+    banner.innerHTML =
+      '<div class="ib-icon"><img src="./images/bot.png" alt=""></div>' +
+      '<div class="ib-text">' +
+        '<strong>Install NOC Assistant</strong>' +
+        '<span>Add it to your home screen for quick access</span>' +
+      '</div>' +
+      '<div class="ib-actions">' +
+        '<button type="button" class="ib-install" id="ibInstall">Install</button>' +
+        '<button type="button" class="ib-later" id="ibLater">Later</button>' +
+      '</div>';
+
+    document.body.appendChild(banner);
+
+    document.getElementById('ibInstall').addEventListener('click', async function() {
+      banner.remove();
+      if (!deferredInstallPrompt) return;
+      try {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+      } catch (e) {}
+      deferredInstallPrompt = null;
+      window.__deferredInstallPrompt = null;
+    });
+
+    document.getElementById('ibLater').addEventListener('click', function() {
+      banner.remove();
+      sessionStorage.setItem('nocInstallDismissed', '1');
+    });
+  }
+
+  // Expose so the head-level listener can call us immediately
+  // if beforeinstallprompt fires after DOMContentLoaded.
+  window.__showInstallBanner = function() {
+    deferredInstallPrompt = deferredInstallPrompt || window.__deferredInstallPrompt;
+    showInstallBanner();
+  };
+
   window.addEventListener('beforeinstallprompt', function(event) {
     event.preventDefault();
     deferredInstallPrompt = event;
-    if (!sessionStorage.getItem('nocInstallPromptShown')) {
-      sessionStorage.setItem('nocInstallPromptShown', '1');
-      setTimeout(function() {
-        if (deferredInstallPrompt && confirm('Install NOC Assistant as an app on your device?')) {
-          deferredInstallPrompt.prompt();
-          deferredInstallPrompt.userChoice.finally(function() {
-            deferredInstallPrompt = null;
-          });
-        }
-      }, 1200);
-    }
-  });
-  window.addEventListener('appinstalled', function() {
-    deferredInstallPrompt = null;
+    window.__deferredInstallPrompt = event;
+    showInstallBanner();
   });
 
+  window.addEventListener('appinstalled', function() {
+    deferredInstallPrompt = null;
+    window.__deferredInstallPrompt = null;
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.remove();
+  });
+
+  // If the event fired before our script loaded, show the banner now.
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.__deferredInstallPrompt) {
+      deferredInstallPrompt = window.__deferredInstallPrompt;
+      // Small delay so the welcome modal appears first
+      setTimeout(showInstallBanner, 1500);
+    }
+  });
+
+  /* ============================================================
+     SERVICE WORKER
+  ============================================================ */
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('./sw.js').catch(function(error) {
